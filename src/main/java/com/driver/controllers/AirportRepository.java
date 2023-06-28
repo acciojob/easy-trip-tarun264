@@ -83,7 +83,7 @@ public class AirportRepository {
         int count = 0;
         Airport airport = new Airport();
         for (Flight flight : FlightDB.values()) {
-            if (flight.getFlightDate().equals(date)) {
+            if (flight.getFlightDate().equals(date) && airport.getAirportName().equals(airportName)) {
                 if (flight.getFromCity().equals(airport.getCity()) && flight.getToCity().equals(airport.getCity())) {
                     // number of passenger in having the flight
                     int flightID = flight.getFlightId();
@@ -103,14 +103,11 @@ public class AirportRepository {
         //This will not include the current person who is trying to book, he might also be just checking price
 
         int bookedFlight=0;
-           for(Integer flights: FlightToPassengerDB.keySet()) {
-               //if flight is same as flight
-               if (flights == flightId) {
-                   bookedFlight = FlightToPassengerDB.get(flightId).size();
-               }
-           }
-            int flightPrice=3000+bookedFlight*50;
-           return flightPrice;
+        if(!FlightToPassengerDB.containsKey(flightId)){
+            return 0;
+        }
+           int bookedPassenger=FlightToPassengerDB.get(flightId).size();
+        return 3000+bookedPassenger*50;
         }
 
 
@@ -121,7 +118,10 @@ public class AirportRepository {
         //else if you are able to book a ticket then return "SUCCESS
 
         //if no passenger has booked flight and its less than max capacity
-        if (FlightToPassengerDB.get(flightId) == null && FlightToPassengerDB.get(flightId).size() <= FlightDB.get(flightId).getMaxCapacity()) {
+        if(!FlightToPassengerDB.containsKey(flightId)){
+            return "FAILURE";
+        }
+        if (FlightToPassengerDB.get(flightId) != null && FlightToPassengerDB.get(flightId).size() <= FlightDB.get(flightId).getMaxCapacity()) {
             List<Integer> passengers = new ArrayList<>(FlightToPassengerDB.get(flightId));
             // if the passenger is already added
             if (passengers.contains(passengerId)) {
@@ -130,12 +130,22 @@ public class AirportRepository {
             passengers.add(passengerId);
             FlightToPassengerDB.put(flightId, passengers);
             return "SUCCESS";
-        } else {
-
-            return "FAILURE";
+            //if the passengers list is empty
+        } else if (FlightToPassengerDB.get(flightId) == null) {
+            List<Integer> passengersList = new ArrayList<>(FlightToPassengerDB.get(flightId));
+            // if the passenger is already added
+            if (passengersList.contains(passengerId)) {
+                return "FAILURE";
+            }
+            passengersList.add(passengerId);
+            FlightToPassengerDB.put(flightId, passengersList);
+            return "SUCCESS";
         }
 
-    }
+    return "FAILURE";
+
+        }
+
 
     public String cancelTicket(Integer flightId, Integer passengerId) {
         //If the passenger has not booked a ticket for that flight or the flightId is invalid or in any other failure case
@@ -143,7 +153,12 @@ public class AirportRepository {
                 // Otherwise return a "SUCCESS" message
                 // and also cancel the ticket that passenger had booked earlier on the given flightId
 
+
         List<Integer> passengers= new ArrayList<>(FlightToPassengerDB.get(flightId));
+
+        if(!FlightToPassengerDB.containsKey(flightId)){
+            return "FAILURE";
+        }
 
         for(List<Integer> passengersList: FlightToPassengerDB.values()){
 
@@ -176,16 +191,16 @@ public class AirportRepository {
         //We need to get the starting airportName from where the flight will be taking off (Hint think of City variable if that can be of some use)
         //return null incase the flightId is invalid or you are not able to find the airportName
 
-        Airport airport = new Airport();
         String name = "";
         City city = FlightDB.get(flightId).getFromCity();
-        for (Integer flightID : FlightDB.keySet()) {
-            if (flightID != flightId || !airport.getCity().equals(city)) {
-                return null;
+        if(FlightDB.containsKey(flightId)) {
+            for (Airport airport : AirportDB.values()) {
+                if (airport.getCity().equals(city)) {
+                    return name = airport.getAirportName();
+                }
             }
-            name += airport.getAirportName();
         }
-        return name;
+        return null;
     }
 
 
