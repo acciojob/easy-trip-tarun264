@@ -83,13 +83,13 @@ public class AirportRepository {
         //This includes both the people who have come for a flight and who have landed on an airport after their flight\
 
         if(StringUtils.isEmpty(airportName)){
-            return 0;
+            throw new NullPointerException();
         }
         int count = 0;
         Airport airport = new Airport();
         //if airport does not exist
         if(airport.getAirportName()!=airportName){
-            return 0;
+            throw new NullPointerException();
         }
 
 
@@ -115,7 +115,7 @@ public class AirportRepository {
 
 //        .testCalculateFlightFare:100 » NullPointer
         if(flightId==null) {
-            return 0;
+            throw new NullPointerException();
         }
 
            int bookedPassenger=FlightToPassengerDB.get(flightId).size();
@@ -130,6 +130,9 @@ public class AirportRepository {
         //else if you are able to book a ticket then return "SUCCESS
 
         //if no passenger has booked flight and its less than max capacity
+        if(flightId==null && passengerId==null){
+            throw new NullPointerException();
+        }
 
 
         if(flightId!=null && passengerId!=null) {
@@ -167,6 +170,10 @@ public class AirportRepository {
                 // and also cancel the ticket that passenger had booked earlier on the given flightId
 //        .testCancelATicketWhenTicketDoesntExist
 
+        if(flightId==null && passengerId==null){
+            throw new NullPointerException();
+        }
+
 
         List<Integer> passengers= new ArrayList<>(FlightToPassengerDB.get(flightId));
 
@@ -190,6 +197,8 @@ public class AirportRepository {
         //Tell the count of flight bookings done by a passenger: This will tell the total count of flight bookings done by a passenger :
         int count=0;
         if(passengerId!=null) {
+            throw new NullPointerException();
+        }
             for (Integer flight : FlightToPassengerDB.keySet()) {
                 List<Integer> passengers = FlightToPassengerDB.get(flight);
                 for (Integer passenger : passengers) {
@@ -198,7 +207,6 @@ public class AirportRepository {
                     }
                 }
             }
-        }
        return count;
 }
 
@@ -209,6 +217,9 @@ public class AirportRepository {
 //GetAirportNameFromFlightIdWhenAirportDoesntExist
 
 
+        if(StringUtils.isEmpty(flightId)){
+            throw new NullPointerException();
+        }
         City city = FlightDB.get(flightId).getFromCity();
         if(FlightDB.containsKey(flightId) && flightId!=null) {
             for (Airport airport : AirportDB.values()) {
@@ -229,7 +240,7 @@ public class AirportRepository {
 
 
         if(flightId==null){
-            return 0;
+            throw new NullPointerException();
         }
         int noOfPassenger= FlightToPassengerDB.get(flightId).size();
         return noOfPassenger*50+3000;
