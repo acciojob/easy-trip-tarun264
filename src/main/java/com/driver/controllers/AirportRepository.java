@@ -5,6 +5,7 @@ import com.driver.model.City;
 import com.driver.model.Flight;
 import com.driver.model.Passenger;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -79,13 +80,18 @@ public class AirportRepository {
 
     public int getNumberOfPeopleOn(Date date, String airportName) {
         //Calculate the total number of people who have flights on that day on a particular airport
-        //This includes both the people who have come for a flight and who have landed on an airport after their flight
+        //This includes both the people who have come for a flight and who have landed on an airport after their flight\
+
+        if(StringUtils.isEmpty(airportName)){
+            return 0;
+        }
         int count = 0;
         Airport airport = new Airport();
         //if airport does not exist
         if(airport.getAirportName()!=airportName){
             return 0;
         }
+
 
         for (Flight flight : FlightDB.values()) {
             if (flight.getFlightDate().equals(date)) {
@@ -107,10 +113,11 @@ public class AirportRepository {
         //Suppose if 2 people have booked the flight already : the price of flight for the third person will be 3000 + 2*50 = 3100
         //This will not include the current person who is trying to book, he might also be just checking price
 
-
-        if(!FlightToPassengerDB.containsKey(flightId)){
+//        .testCalculateFlightFare:100 » NullPointer
+        if(flightId==null) {
             return 0;
         }
+
            int bookedPassenger=FlightToPassengerDB.get(flightId).size();
         return bookedPassenger*50+3000;
         }
@@ -124,25 +131,28 @@ public class AirportRepository {
 
         //if no passenger has booked flight and its less than max capacity
 
-        if (FlightToPassengerDB.get(flightId) != null && FlightToPassengerDB.get(flightId).size() < FlightDB.get(flightId).getMaxCapacity()) {
-            List<Integer> passengers = new ArrayList<>(FlightToPassengerDB.get(flightId));
-            // if the passenger is already added
-            if (passengers.contains(passengerId)) {
-                return "FAILURE";
+
+        if(flightId!=null && passengerId!=null) {
+            if (FlightToPassengerDB.get(flightId) != null && FlightToPassengerDB.get(flightId).size() < FlightDB.get(flightId).getMaxCapacity()) {
+                List<Integer> passengers = new ArrayList<>(FlightToPassengerDB.get(flightId));
+                // if the passenger is already added
+                if (passengers.contains(passengerId)) {
+                    return "FAILURE";
+                }
+                passengers.add(passengerId);
+                FlightToPassengerDB.put(flightId, passengers);
+                return "SUCCESS";
+                //if the passengers list is empty
+            } else if (FlightToPassengerDB.get(flightId) == null) {
+                List<Integer> passengersList = new ArrayList<>(FlightToPassengerDB.get(flightId));
+                // if the passenger is already added
+                if (passengersList.contains(passengerId)) {
+                    return "FAILURE";
+                }
+                passengersList.add(passengerId);
+                FlightToPassengerDB.put(flightId, passengersList);
+                return "SUCCESS";
             }
-            passengers.add(passengerId);
-            FlightToPassengerDB.put(flightId, passengers);
-            return "SUCCESS";
-            //if the passengers list is empty
-        } else if (FlightToPassengerDB.get(flightId) == null) {
-            List<Integer> passengersList = new ArrayList<>(FlightToPassengerDB.get(flightId));
-            // if the passenger is already added
-            if (passengersList.contains(passengerId)) {
-                return "FAILURE";
-            }
-            passengersList.add(passengerId);
-            FlightToPassengerDB.put(flightId, passengersList);
-            return "SUCCESS";
         }
 
     return "FAILURE";
@@ -155,18 +165,22 @@ public class AirportRepository {
                 // then return a "FAILURE" message
                 // Otherwise return a "SUCCESS" message
                 // and also cancel the ticket that passenger had booked earlier on the given flightId
+//        .testCancelATicketWhenTicketDoesntExist
 
 
         List<Integer> passengers= new ArrayList<>(FlightToPassengerDB.get(flightId));
 
-        if(!FlightToPassengerDB.containsKey(flightId) || FlightToPassengerDB.get(flightId)==null){
-            return "FAILURE";
-        }
 
-        if (passengers.contains(passengerId)) {
-            passengers.remove(passengerId);
-            PassengerDB.remove(passengerId);
-            return "SUCCESS";
+        if(flightId!=null && passengerId!=null) {
+            if (!FlightToPassengerDB.containsKey(flightId) || FlightToPassengerDB.get(flightId) == null) {
+                return "FAILURE";
+            }
+
+            if (passengers.contains(passengerId)) {
+                passengers.remove(passengerId);
+                PassengerDB.remove(passengerId);
+                return "SUCCESS";
+            }
         }
 
         return "FAILURE";
@@ -175,14 +189,16 @@ public class AirportRepository {
     public int getCountOfBooking(Integer passengerId) {
         //Tell the count of flight bookings done by a passenger: This will tell the total count of flight bookings done by a passenger :
         int count=0;
-       for(Integer flight: FlightToPassengerDB.keySet()) {
-           List<Integer> passengers = FlightToPassengerDB.get(flight);
-           for (Integer passenger : passengers) {
-               if (passenger ==(passengerId)) {
-                   count++;
-               }
-           }
-       }
+        if(passengerId!=null) {
+            for (Integer flight : FlightToPassengerDB.keySet()) {
+                List<Integer> passengers = FlightToPassengerDB.get(flight);
+                for (Integer passenger : passengers) {
+                    if (passenger == (passengerId)) {
+                        count++;
+                    }
+                }
+            }
+        }
        return count;
 }
 
@@ -192,8 +208,9 @@ public class AirportRepository {
         //return null incase the flightId is invalid or you are not able to find the airportName
 //GetAirportNameFromFlightIdWhenAirportDoesntExist
 
+
         City city = FlightDB.get(flightId).getFromCity();
-        if(FlightDB.containsKey(flightId)) {
+        if(FlightDB.containsKey(flightId) && flightId!=null) {
             for (Airport airport : AirportDB.values()) {
                 if (airport.getCity().equals(FlightDB.get(flightId).getFromCity())) {
                     return airport.getAirportName();
@@ -211,7 +228,7 @@ public class AirportRepository {
         //Revenue will also decrease if some passenger cancels the flight
 
 
-        if(!FlightToPassengerDB.containsKey(flightId)){
+        if(flightId==null){
             return 0;
         }
         int noOfPassenger= FlightToPassengerDB.get(flightId).size();
